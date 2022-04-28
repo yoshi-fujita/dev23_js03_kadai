@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="G'sアカデミー課題 チャット">
+    <link rel="stylesheet" href="css/reset.css" />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="icon" type="image/png" href="image/吹き出しのアイコン12.png">
+    <title>Baloon Chat</title>
+  </head>
+  <body>
+  
+    <div class="iframe-wrapper">
+      <iframe width="560" height="315" src="https://www.youtube.com/embed/LQyNc_RBLNc?controls=0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    </div>
+
+
+    <div>
+      <div> 名前：<input type="text" id="uname"> </div>
+      <div>
+          <textarea id="text" cols="25" rows="4"></textarea>
+          <button id="send">送信</button>
+      </div>
+      <div id="output"></div>
+    </div>
+
+    <div class="container"></div>
+
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script type="module">
+      // Import the functions you need from the SDKs you need
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-app.js";
+      import {
+        getDatabase,
+        ref,
+        push,
+        set,
+        onChildAdded,
+        remove,
+        onChildRemoved,
+      } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-database.js";
+      // Your web app's Firebase configuration
+      const firebaseConfig = {
+
+      };
+      // Firebase Realtime DB に接続
+      const app = initializeApp(firebaseConfig);
+      const db  = getDatabase(app); 
+      const dbRef = ref(db,"chat"); //Realtime DB 内の "chat" を使う
+
+      let msg_id = 0;
+
+      $("#send").on("click", function () {
+        const uname = $("#uname").val();
+        let text = $("#text").val();
+        text = text.replace(/\n/g, '<br>');
+
+        const msg = {
+          msg_id: msg_id++,
+          uname: uname,
+          text: text
+        }
+
+        const newPostRef = push(dbRef);
+        set(newPostRef, msg);
+
+        $("#text").val("");
+      });
+
+      // let msg_count = 0;
+      // let msgs = new Array;
+
+      onChildAdded(dbRef, function(data){
+        const msg = data.val();
+        const key = data.key;
+        console.log("key=", key, "msg=", msg);
+
+        // const msg_tmp = { uname: msg.uname, text: msg.text}
+        // msgs[msg_count++] = msg_tmp;
+
+        const html =`
+          <div class=${key}>
+            <p>${msg.text}</p>
+          </div>
+        `;
+        let container = $('.container');
+
+        container.append(html);
+        // console.log(msgs);
+
+        let item = container.find('p');
+
+        item.each(function(index) {
+          $(this).css({
+            top: 200,
+            'font-size': '8px',
+          });
+        });
+
+      });
+
+    </script>
+    <script src="js/chat.js"></script>
+  </body>
+</html>
