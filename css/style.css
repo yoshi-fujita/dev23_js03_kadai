@@ -36,27 +36,70 @@ a:visited{
     height: 100%;
 }
 
-.container p {
+.admin{
+    font-size: 8px;
+    padding: 2px;
+    color: #fff;
+    background-color: #f00;
+    font-weight: bold;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.input{
+    display: flex;
+    align-items: start;
+    position: absolute;
+    top: 70vw;
+}
+
+#comment_category{
+    padding: 1px;
+}
+
+
+.container div {
     left: 100%;
-    margin: 0;
-    padding: 5px;
-    border-radius: 5px;
-    line-height: 1.2;
-    background-color: #fff;
     display: inline-block; 
     white-space: nowrap;
     animation-name: marquee; /* アニメーションのクラス名 */
     animation-timing-function: linear; /* アニメーションのタイミング・進行割合の指定 */
-    animation-duration: 30s; /* アニメーションの速度 */
+    animation-duration: 60s; /* アニメーションの速度 */
     animation-iteration-count: 1; /* アニメーションの動作回数 */
     position: absolute;
-    top: 30;
-    font-size: 12px;
-    display: inline-block;
+    top: 65vw;
+    display: flex;
+    align-items: start;
 }
 
-.container p:hover{
+.container div:hover{
     animation-play-state: paused;
+}
+
+.container p{
+    margin: 0 3px 0 0;
+    padding: 5px;
+    border-radius: 10px;
+    border: 1px solid #222;
+    line-height: 1.2;
+    background-color: #fff;
+    font-size: 8px;
+}
+
+.question{
+    width: 24px;
+    margin: 0;
+}
+
+.idea{
+    width: 18px;
+    margin: 0 3px 0 0;
+}
+
+.like, .dislike{
+    width: 16px;
+    margin: 0 3px 0 0;
 }
 
 @keyframes marquee {
