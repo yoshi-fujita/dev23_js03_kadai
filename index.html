@@ -13,11 +13,12 @@
   <body>
     <div class="room_init">
       　room： <input type="text" id="room">
-      <button id="room_set">セット</button>      
+      <button id="room_set">set</button>　
+      <a href="https://github.com/yoshi-fujita/dev23_js03_kadai/blob/main/README.md" target="_blank">help</a>
     </div>
     <div class="url_init">
       　YouTube URL：<input type="text" id="url">
-      <button id="url_set">セット</button>      
+      <button id="url_set">set</button>      
     </div>    
 
     <div class="iframe-wrapper"></div>
@@ -25,14 +26,16 @@
     <div class="admin">admin</div>
 
     <div class="input">
-        　name： <input type="text" id="uname">　
-        <select name="comment_category" id="comment_category">
+      <div>
+        　名前 <input type="text" id="uname"><br><br>
+        　カテゴリ <select name="comment_category" id="comment_category">
           <option value="comment">コメント</option>
           <option value="question">疑問・質問</option>
           <option value="idea">気づき・提案</option>
-      </select>
-        　<textarea id="text" cols="25" rows="4"></textarea>
-        <button id="send">送信</button>
+        </select>
+      </div>
+      <textarea id="text" cols="20" rows="4"></textarea>
+      <button id="send">送信</button>
     </div>
 
     <div class="container"></div>
@@ -62,8 +65,7 @@
 
 
 
-
-
+        
       };
 
       // Firebase Realtime DB に接続
@@ -97,7 +99,7 @@
             // url の動画を表示
             if(room_name === msg_admin.rname){
               const html =`
-                <iframe id="iframe" src="${url}" width="560" height="315" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                <iframe id="iframe" src="${url}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
               `;
               let iframe_wrapper = $('.iframe-wrapper');
               iframe_wrapper.append(html);
