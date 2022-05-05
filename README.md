@@ -18,6 +18,7 @@
 - 最初にrealtime dbをクリアする必要がある
 - 最初にroom名を決めた人がadminになる。後から入る人は、同じroom名を入れないと入れない
 - adminは、表示する動画のURL（YouTubeの埋め込み形式）を指定できる。例えば、https://www.youtube.com/embed/LQyNc_RBLNc
+- 名前（name）は、今後の発展用に一応入力欄はあるが、今は使っていない。匿名の投稿のみ
 
 ## ③ 質問・疑問（あれば）
 - dbをroomごとに分けたかったが、"chat"以外にして使い分ける方法が分からなかった
