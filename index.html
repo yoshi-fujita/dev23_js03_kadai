@@ -3,39 +3,84 @@
   <head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="G'sアカデミー課題 チャット">
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
+    />
+    <meta name="description" content="G'sアカデミー課題 チャット" />
     <link rel="stylesheet" href="css/reset.css" />
     <link rel="stylesheet" href="css/style.css" />
-    <link rel="icon" type="image/png" href="image/吹き出しのアイコン12.png">
-    <title>Baloon Chat</title>
+    <link rel="icon" type="image/png" href="image/吹き出しのアイコン12.png" />
+    <title>Balloon Chat</title>
   </head>
   <body>
-    <div class="room_init">
-      　room： <input type="text" id="room">
-      <button id="room_set">set</button>　
-      <a href="https://github.com/yoshi-fujita/dev23_js03_kadai/blob/main/README.md" target="_blank">help</a>
+    <div class="title_area">
+      <img src="image/吹き出しのアイコン12.png" alt="吹き出しアイコン" />
+      <h2>Balloon Chat</h2>
+      <a
+        href="https://github.com/yoshi-fujita/dev23_js03_kadai/blob/main/README.md"
+        target="_blank"
+        >help</a
+      >
     </div>
+
+    <p class="room_init">name： <input type="text" id="uname" /></p>
+    <p class="room_init">
+      room： <input type="text" id="room" />
+      <button id="room_set">set</button>
+    </p>
+
     <div class="url_init">
-      　YouTube URL：<input type="text" id="url">
-      <button id="url_set">set</button>      
-    </div>    
+      <p>
+        入力された room はありません。<br />作成する場合は画像をアップロードするか、<br>表示メディアのURLをセットしてしてください。
+      </p>
+      <br />
+      <p>
+        画像アップロード　<input type="file" id="image_upload" accept="image/jpeg, image/png, image/gif"/>
+      </p>
+      <br />
+      <p>
+        <select name="url_category" id="url_category">
+          <option value="youtube">YouTube</option>
+          <option value="pdf">pdf</option>
+          <option value="image">image</option>
+          <option value="page">page</option>
+          <option value="none">無地（URL不要）</option>
+        </select>
+        &ensp;<input type="text" id="url" placeholder="URL" />
+        <button id="url_set">set</button>
+      </p>
+      <br />
+      <input
+        type="button"
+        value="やり直す"
+        onclick="window.location.reload();"
+      />
+    </div>
 
-    <div class="iframe-wrapper"></div>
+    <div class="wrapper">
+    </div>
 
-    <div class="admin">admin</div>
+    <div class="status">
+      <p class="admin">admin</p>
+      <p class="room_disp"></p>
+    </div>
 
     <div class="input">
       <div>
-        　名前 <input type="text" id="uname"><br><br>
-        　カテゴリ <select name="comment_category" id="comment_category">
+        カテゴリ<br />
+        <select name="comment_category" id="comment_category">
           <option value="comment">コメント</option>
           <option value="question">疑問・質問</option>
           <option value="idea">気づき・提案</option>
         </select>
       </div>
-      <textarea id="text" cols="20" rows="4"></textarea>
+      &ensp;
+      <textarea id="text" cols="20" rows="3"></textarea>
       <button id="send">送信</button>
+      <div class="re_upload">
+        画像更新<br><input type="file" id="image_re_upload" accept="image/jpeg, image/png, image/gif"/>
+      </div>
     </div>
 
     <div class="container"></div>
@@ -44,7 +89,7 @@
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script type="module">
-      // Import the functions you need from the SDKs you need
+      // 以下、Firebase 関連の処理
       import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-app.js";
       import {
         getDatabase,
@@ -65,223 +110,384 @@
 
 
 
+
+
         
       };
 
       // Firebase Realtime DB に接続
       const app = initializeApp(firebaseConfig);
-      const db  = getDatabase(app); 
-      let dbRef = ref(db, "chat"); // Realtime DB の chat を使う
+      const db = getDatabase(app);
+
+      // admin 情報の読み出し（既存 room、動画URL など）
 
       // 初期化
-      let room_name = "";
-      let url = "";
-      let admin = 0;
-      $(".url_init").hide();
-      $(".admin").hide();
-      $(".input").hide();
+      let room_name = ""; // 入力された room名
+      let user_name = ""; // 入力されたユーザ名
+      let room_ref = ref(db, "chat/" + "dummy"); // db の room_name 参照用（room名が決まるまでは "dummy" を入れておく）
+      let admin_ref = ref(db, "admin"); // room作成・管理に Realtime DB の admin を使う
+      let admin_data = []; // admin 情報を読み出してくる配列。room名の連想配列
+      let admin = false; // admin なら true
+      const start_time = Date();
+      $(".url_init").hide(); // url入力欄を隠す
+      $(".admin").hide(); // adminマークを隠す
+      $(".room_disp").hide(); // room名表示を隠す
+      $(".wrapper").hide(); // 背景表示エリアを隠す
+      $(".input").hide(); // コメント入力欄を隠す
+      $(".re_upload").hide(); // 画像更新入力を隠す
 
-      let msg_count = 0;
-      let msg_admin = {};
+      // DB より admin 情報の読み出し
+      onChildAdded(admin_ref, function (data) {
+        const msg = data.val();
+        const key = data.key;
+        admin_data[msg.rname] = {
+          key: key,
+          rname: msg.rname,
+          uname: msg.uname,
+          bg: msg.bg,
+          url: msg.url,
+          date: msg.date,
+        };
+
+        // 画像の更新があれば更新
+        if(msg.rname === room_name && msg.bg === "image"){
+          back_ground(msg.bg, msg.url);
+        }
+      });
 
       // Room 名 を取得
       $("#room_set").on("click", function () {
         room_name = $("#room").val();
-        console.log("room=", room_name);
-        if(msg_count){
-          if(room_name != msg_admin.rname){
-            alert(room_name+" is not valid");
-            room_name = "";
-            $("#room").val("");            
-          } else{
-            $(".room_init").hide();
-            url = msg_admin.url;
-            // url の動画を表示
-            if(room_name === msg_admin.rname){
-              const html =`
-                <iframe id="iframe" src="${url}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-              `;
-              let iframe_wrapper = $('.iframe-wrapper');
-              iframe_wrapper.append(html);
-              $(".input").show();
+        user_name = $("#uname").val();
+
+        if (!user_name) {
+          alert("name を入力してください。"); // 空の name は拒否
+        } else if (!room_name) {
+          alert("room名を入力してください。"); // 空の room名は拒否
+        } else {
+          // use_name と room_name は確定。room_name のリスナーをセットする
+          const room_html = `${room_name}　${user_name}`;
+          let room_disp = $(".room_disp");
+          room_disp.append(room_html); // 画面に room名、user名を表示
+
+          console.log("room=", room_name, "user=", user_name);
+
+          room_ref = ref(db, "chat/" + room_name); // Realtime DB の chat/room_name を使う
+
+          // リスナーなどの DB 関連の処理を、ref の定義後に通さないと動作しないためにここに配置
+          onChildAdded(room_ref, function (data) {
+            const msg = data.val();
+            const key = data.key;
+            console.log("msg=", msg);
+
+            let html = "";
+            if (msg.category === "comment") {
+              // ３種類のコメントカテゴリに対応
+              html = `
+              <div class=${key}>
+                <p class="comment">${msg.text}</p>
+                <img class="like" src="image/01246.png" alt="like">
+                <img class="dislike" src="image/01247.png" alt="dislike">
+                <img class="big_dislike" src="image/01247.png" alt="big_dislike">
+              </div>
+            `;
+            } else if (msg.category === "question") {
+              html = `
+              <div class=${key}>
+                <img class="question" src="image/00088.png" alt="question">
+                <p class="comment">${msg.text}</p>
+                <img class="like" src="image/01246.png" alt="like">
+                <img class="dislike" src="image/01247.png" alt="dislike">
+                <img class="big_dislike" src="image/01247.png" alt="big_dislike">
+              </div>
+            `;
+            } else {
+              html = `
+              <div class=${key}>
+                <img class="idea" src="image/01242.png" alt="question">
+                <p class="comment">${msg.text}</p>
+                <img class="like" src="image/01246.png" alt="like">
+                <img class="dislike" src="image/01247.png" alt="dislike">
+                <img class="big_dislike" src="image/01247.png" alt="big_dislike">
+                </div>
+            `;
             }
-          }
-        } else{
+
+            let container = $(".container");
+            if (msg.date > start_time) {
+              // ブラウザを開いた後のコメントのみを表示
+              container.append(html);
+            }
+            if(!admin){
+              $(".big_dislike").hide(); // admin用の dislike を隠す
+            }
+          });
+
+          // like が押された時の処理
+          $(document).on("click", ".like", function () {
+            const likeKey = $(this).parent().attr("class");
+            const dbChatLike = ref(db, `chat/${room_name}/${likeKey}`);
+
+            let buffer = {};
+            let like_count;
+            let dislike_count;
+
+            get(dbChatLike).then((snapshot) => {
+              buffer = snapshot.val();
+              like_count = ++buffer.likes;
+              dislike_count = buffer.dislikes;
+              console.log("like", like_count, dislike_count);
+
+              update(dbChatLike, buffer);
+            });
+          });
+
+          // コメント欄がクリックされたときも like としてカウント
+          $(document).on("click", ".comment", function () {
+            const likeKey = $(this).parent().attr("class");
+            const dbChatLike = ref(db, `chat/${room_name}/${likeKey}`);
+
+            let buffer = {};
+            let like_count;
+            let dislike_count;
+
+            get(dbChatLike).then((snapshot) => {
+              buffer = snapshot.val();
+              like_count = ++buffer.likes;
+              dislike_count = buffer.dislikes;
+              console.log("like", like_count, dislike_count);
+
+              update(dbChatLike, buffer);
+            });
+          });
+
+          // dislike が押された時の処理
+          $(document).on("click", ".dislike", function () {
+            const dislikeKey = $(this).parent().attr("class");
+            const dbChatDislike = ref(db, `chat/${room_name}/${dislikeKey}`);
+
+            let buffer = {};
+            let like_count;
+            let dislike_count;
+
+            get(dbChatDislike).then((snapshot) => {
+              buffer = snapshot.val();
+              like_count = buffer.likes;
+              dislike_count = ++buffer.dislikes;
+              console.log("dislike", like_count, dislike_count);
+
+              update(dbChatDislike, buffer);
+            });
+          });
+
+          // big_dislike が押された時の処理
+          $(document).on("click", ".big_dislike", function () {
+            const dislikeKey = $(this).parent().attr("class");
+            const dbChatDislike = ref(db, `chat/${room_name}/${dislikeKey}`);
+
+            let buffer = {};
+            let like_count;
+            let dislike_count;
+
+            get(dbChatDislike).then((snapshot) => {
+              buffer = snapshot.val();
+              like_count = buffer.likes;
+              buffer.dislikes += 10;
+              dislike_count = buffer.dislikes;
+              console.log("dislike", like_count, dislike_count);
+
+              update(dbChatDislike, buffer);
+            });
+          });
+
+          // db に変更があった時、コメントのフォントサイズとポジションを変更
+          onChildChanged(room_ref, function (data) {
+            const msg = data.val();
+            const key = data.key;
+            // console.log("key=", key, "msg=", msg);
+
+            let diff = msg.likes - msg.dislikes;
+
+            if(diff < 0){
+              diff = 0;
+            }
+            if (diff >= 0 && diff < 11) {
+              const font = 8 + diff * 2 + "px";
+              const position = 65 - diff * 4 + "vw";
+              // const speed = (60 + diff * 6) + "s";
+              console.log("diff=", diff, "font=", font, "position=", position);
+
+              const KeyClass = "." + key;
+              $(KeyClass).css("top", position);
+              // $(KeyClass).css("animation-duration", speed);
+              const KeyPClass = KeyClass + " p";
+              $(KeyPClass).css("font-size", font);
+            }
+          });
+        }
+
+        if (room_name in admin_data) {
+          // 既に room がある場合は、背景を表示してスタート
+          // 背景を表示
+          back_ground(admin_data[room_name].bg, admin_data[room_name].url);
+
+          $(".title_area").hide();
           $(".room_init").hide();
-          admin = 1;
+          $(".room_disp").show();
+          $(".wrapper").show();
+          $(".input").show();
+        } else {
+          // room がない場合は、admin として新規 room の作成を行う
+          admin = true;
           $(".url_init").show(); // 初期設定用の URL 欄を表示
         }
       });
 
-      // YouTube URL を取得
+      // 背景を取得（無地か URL の場合）
       $("#url_set").on("click", function () {
-        url = $("#url").val();
+        const bg = $("#url_category").val();
+        const url = $("#url").val();
+        console.log("bg=", bg, "URL=", url);
+
+        $(".title_area").hide();
+        $(".room_init").hide();
         $(".url_init").hide();
-        console.log("URL=", url);
-        // url の動画を表示
-        const html =`
-          <iframe id="iframe" src="${url}" width="560" height="315" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-        `;
-        let iframe_wrapper = $('.iframe-wrapper');
-        iframe_wrapper.append(html);
+
+        const msg = {
+          rname: room_name,
+          uname: user_name,
+          bg: bg,
+          url: url,
+          date: Date(),
+        };
+        const newPostRef = push(admin_ref);
+        set(newPostRef, msg);
+
+        // 背景を表示
+        back_ground(bg, url);
+
+        $(".room_disp").show();
         $(".admin").show();
+        $(".wrapper").show();
         $(".input").show();
+        // $(".big_dislike").show();
       });
+
+      // 背景を取得（画像アップロードの場合）
+      document.getElementById("image_upload").addEventListener("change", function (e) {
+        let file = e.target.files[0];
+
+        // ファイルリーダー作成
+        let fileReader = new FileReader();
+        fileReader.onload = function () {
+          // Data URIを取得
+          let dataUri = this.result;
+
+          $(".title_area").hide();
+          $(".room_init").hide();
+          $(".url_init").hide();
+
+          const msg = {
+              rname: room_name,
+              uname: user_name,
+              bg: "image",
+              url: dataUri,
+              date: Date(),
+          };
+          const newPostRef = push(admin_ref);
+          set(newPostRef, msg);
+
+          // 背景を表示
+          back_ground("image", dataUri);
+
+          $(".room_disp").show();
+          $(".admin").show();
+          $(".wrapper").show();
+          $(".input").show();
+          $(".re_upload").show();
+          // $(".big_dislike").show();
+        };
+        // ファイルをData URIとして読み込む
+        fileReader.readAsDataURL(file);
+      });
+
+      // 背景を取得（画像再アップロードの場合）
+      document.getElementById("image_re_upload").addEventListener("change", function (e) {
+        let file = e.target.files[0];
+
+        // ファイルリーダー作成
+        let fileReader = new FileReader();
+        fileReader.onload = function () {
+          // Data URIを取得
+          let dataUri = this.result;
+
+          const msg = {
+              rname: room_name,
+              uname: user_name,
+              bg: "image",
+              url: dataUri,
+              date: Date(),
+          };
+          const newPostRef = push(admin_ref);
+          set(newPostRef, msg);
+        };
+        // ファイルをData URIとして読み込む
+        fileReader.readAsDataURL(file);
+      });
+
+      function back_ground(bg, url) {
+        let html;
+        let wrapper = $(".wrapper");
+        if (bg === "image") {
+          console.log("image:", url);
+          html = `
+            <img src="${url}" alt="">
+          `;
+          $(".wrapper>img").remove();
+          wrapper.append(html);
+        } else if (bg === "youtube") {
+          console.log("YouTube:", url);
+          html = `
+            <iframe id="iframe" src="${url}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+          `;
+          wrapper.append(html);
+        } else if (bg === "pdf") {
+          console.log("pdf:", url);
+          html = `
+            <iframe id="main-slide" src="https://azu.github.io/slide-pdf.js/?slide=${url}" scrolling="no" allowtransparency="true" width="100%" height="100%" style="border:0;"></iframe>
+          `;
+          wrapper.append(html);
+        } else if (bg === "page") {
+          console.log("page:", url);
+          html = `
+            <iframe src="${url}"></iframe>
+          `;
+          wrapper.append(html);
+        } else {
+          console.log("背景なし");
+        }
+      }
 
       // コメントを db に投稿
       $("#send").on("click", function () {
         const uname = $("#uname").val();
         const category = $("#comment_category").val();
         let text = $("#text").val();
-        text = text.replace(/\n/g, '<br>');
+        text = text.replace(/\n/g, "<br>");
 
         const msg = {
-          mid: msg_count,
           likes: 0,
           dislikes: 0,
           rname: room_name,
-          url: url,
           uname: uname,
           category: category,
-          text: text
-        }
-        const newPostRef = push(dbRef);
+          text: text,
+          date: Date(),
+        };
+        const newPostRef = push(room_ref);
         set(newPostRef, msg);
 
         $("#text").val("");
-      });
-
-      // コメントが追加されたら画面に表示
-      onChildAdded(dbRef, function(data){
-        const msg = data.val();
-        const key = data.key;
-        console.log("msg=", msg);
-
-        if(msg_count === 0){
-          msg_admin = { mid: msg.mid, likes: msg.likes, dislikes: msg.dislikes, key: key, rname: msg.rname, url: msg.url, uname: msg.uname, category: msg.category ,text: msg.text}
-        }
-        msg_count++;
-
-        if(room_name === msg_admin.rname){ // room 名が異なるものは無視
-          let html = "";
-          console.log("category=", msg.category);
-          if(msg.category === "comment"){ // ３種類のコメントカテゴリに対応
-            html =`
-              <div class=${key}>
-                <p class="comment">${msg.text}</p>
-                <img class="like" src="image/01246.png" alt="like">
-                <img class="dislike" src="image/01247.png" alt="dislike">
-              </div>
-            `;
-          } else if(msg.category === "question"){
-            html =`
-              <div class=${key}>
-                <img class="question" src="image/00088.png" alt="question">
-                <p class="comment">${msg.text}</p>
-                <img class="like" src="image/01246.png" alt="like">
-                <img class="dislike" src="image/01247.png" alt="dislike">
-              </div>
-            `;
-          } else{
-            html =`
-              <div class=${key}>
-                <img class="idea" src="image/01242.png" alt="question">
-                <p class="comment">${msg.text}</p>
-                <img class="like" src="image/01246.png" alt="like">
-                <img class="dislike" src="image/01247.png" alt="dislike">
-              </div>
-            `;
-          }
-
-          let container = $('.container');
-          container.append(html);
-        }
-      });
-
-      // like が押された時の処理
-      $(document).on('click','.like',function(){    
-   
-        const likeKey = $(this).parent().attr('class');
-        const dbChatLike = ref(db,`chat/${likeKey}`);
-
-        let buffer = {};
-        let like_count;
-        let dislike_count;
-
-        get(dbChatLike).then((snapshot) => {
-          buffer = snapshot.val();
-          like_count = ++buffer.likes;
-          dislike_count = buffer.dislikes;
-          console.log("like", like_count, dislike_count);
-          console.log("buffer=", buffer);
-
-          update(dbChatLike, buffer);
-        })
-      });
-
-      // コメント欄がクリックされたときも like としてカウント
-      $(document).on('click','.comment',function(){    
-   
-        const likeKey = $(this).parent().attr('class');
-        const dbChatLike = ref(db,`chat/${likeKey}`);
-
-        let buffer = {};
-        let like_count;
-        let dislike_count;
-
-        get(dbChatLike).then((snapshot) => {
-          buffer = snapshot.val();
-          like_count = ++buffer.likes;
-          dislike_count = buffer.dislikes;
-          console.log("like", like_count, dislike_count);
-          console.log("buffer=", buffer);
-
-          update(dbChatLike, buffer);
-        })
-      });
-
-      // dislike が押された時の処理
-      $(document).on('click','.dislike',function(){    
-   
-        const dislikeKey = $(this).parent().attr('class');
-        const dbChatDislike = ref(db,`chat/${dislikeKey}`);
-
-        let buffer = {};
-        let like_count;
-        let dislike_count;
-
-        get(dbChatDislike).then((snapshot) => {
-          buffer = snapshot.val();
-          like_count = buffer.likes;
-          dislike_count = ++buffer.dislikes;
-          console.log("dislike", like_count, dislike_count);
-          console.log("buffer=", buffer);
-
-          update(dbChatDislike, buffer);
-        })
-      });
-
-      // db に変更があった時、コメントのフォントサイズとポジションを変更
-      onChildChanged(dbRef, function(data){
-        const msg = data.val();
-        const key = data.key;
-        console.log("key=", key, "msg=", msg);
-
-        const diff = msg.likes - msg.dislikes;
-
-        if( diff >= 0 && diff < 11 ){
-          const font = (8 + diff * 2) + "px";
-          const position = (65 - diff * 4) + "vw";
-          // const speed = (30 + diff * 6) + "s";
-          console.log("diff=", diff, "font=", font, "posisition=", position);
-
-          const KeyClass = "." + key;
-          console.log("class=", KeyClass);
-          $(KeyClass).css("top", position);
-          // $(KeyClass).css("animation-duration", speed);
-          const KeyPClass = KeyClass + " p"
-          $(KeyPClass).css("font-size", font);
-        }
       });
     </script>
     <script src="js/chat.js"></script>
