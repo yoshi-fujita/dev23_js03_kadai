@@ -36,6 +36,12 @@
 - 発表直前になりましたが、デプロイに成功しました
 - ウィンドウの横幅が広すぎると、下部の入力領域が隠れるので、ウィンドウ幅を少し狭めてみてください。
 - https://gs23-eb548.web.app/
+- サンプルルーム
+  - gs　（YouTuneの埋め込みURL指定）
+  - image　（画像のURL指定）
+  - page　（WebページのURL指定）
+  - pdf　（pdfのURL指定）
+  - 画像　（アップロードした画像）
 
 ![qrcode_202205252139](https://user-images.githubusercontent.com/32793942/170264116-0f39c514-19e3-4c26-8909-78323406f858.png)
 
