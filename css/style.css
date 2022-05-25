@@ -8,6 +8,7 @@ html{
 body{
     font-family:"Open Sans",'ヒラギノ角ゴ ProN W3', Hiragino Kaku Gothic ProN, "メイリオ", Meiryo, sans-serif;
     font-size: 1.6rem;
+    line-height: 1.3;
     color: #222;
 }
 a:visited{
@@ -19,7 +20,36 @@ a:visited{
     background-position: center top;
 }
 
-.iframe-wrapper{
+.title_area{
+    margin: 10px 0 0 50px;
+    display: flex;
+    align-items: center;
+}
+
+.title_area img{
+    margin: 0 10px 0 0;
+    height: 30px;
+}
+
+.title_area h2{
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin: 0 50px 0 0;
+}
+
+.room_init{
+    margin: 10px 0 0 50px;
+    font-size: 1.4rem;
+    line-height: 1.5;
+}
+.room_init a{
+    margin: 0 0 0 10px;
+}
+.url_init{
+    margin: 30px 0 0 50px;
+}
+
+.wrapper{
     position: relative;
     padding-bottom: 56.25%; /* アスペクト比16:9の場合 */
     padding-top: 30px;
@@ -28,7 +58,7 @@ a:visited{
     margin-bottom: 2rem; /* YouTubeの下に余白をつける */
 }
 
-.iframe-wrapper iframe{
+.wrapper iframe{
     position: absolute;
     top: 0;
     left: 0;
@@ -36,22 +66,49 @@ a:visited{
     height: 100%;
 }
 
-.admin{
-    font-size: 8px;
-    padding: 2px;
-    color: #fff;
-    background-color: #f00;
-    font-weight: bold;
+.wrapper img{
     position: absolute;
     top: 0;
     left: 0;
+    max-width: 100%;
+}
+
+.status{
+    display: flex;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.admin{
+    font-size: 8px;
+    padding: 2px 4px;
+    color: #fff;
+    background-color: #f00;
+    font-weight: bold;
+}
+.room_disp{
+    font-size: 8px;
+    padding: 2px 4px;
+    color: #fff;
+    background-color: #00f;
+    font-weight: bold;
 }
 
 .input{
     display: flex;
     align-items: start;
     position: absolute;
-    top: 70vw;
+    top: 68vw;
+    margin: 10px;
+}
+
+.re_upload{
+    margin: 0 0 2px 20px;
+}
+
+#text{
+    margin: 10px 10px 10px 10px;
 }
 
 #uname, #text{
@@ -62,6 +119,9 @@ a:visited{
     padding: 1px;
 }
 
+.container{
+    overflow: hidden;
+}
 
 .container div {
     left: 100%;
@@ -103,6 +163,11 @@ a:visited{
 
 .like, .dislike{
     width: 16px;
+    margin: 0 3px 0 0;
+}
+
+.big_dislike{
+    width: 30px;
     margin: 0 3px 0 0;
 }
 
