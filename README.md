@@ -38,7 +38,7 @@
 - ウィンドウの横幅が広すぎると、下部の入力領域が隠れるので、ウィンドウ幅を少し狭めてみてください。
 - https://gs23-eb548.web.app/
 - サンプルルーム
-  - gs　（YouTuneの埋め込みURL指定）
+  - gs　（YouTubeの埋め込みURL指定）
   - image　（画像のURL指定）
   - page　（WebページのURL指定）
   - pdf　（pdfのURL指定）
